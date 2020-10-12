@@ -1,1 +1,81 @@
-#Problem 1
+import numpy as np
+import random
+from scipy.integrate import odeint
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+# Define starting conditions
+N = 1000
+S = 995
+I = 5
+R = N-S-I
+days = 30
+t = 0.0
+N_list = [N]
+S_list = [S]
+I_list = [I]
+R_list = [R]
+t_list = [t]
+
+mu = 0.01
+beta = 1
+gamma = 0.5
+
+# Defining all events, changes in [S, I, R]
+E1 = [1, 0, 0]     #birth 
+E2 = [-1, 1, 0]    #infection
+E3 = [0, -1, 1]    #recovery
+E4 = [-1, 0, 0]    #deathS
+E5 = [0, -1, 0]    #deathI
+E6 = [0, 0 , -1]   #deathR
+
+e_list = [E1, E2, E3, E4, E5, E6]
+
+while t < days:
+    # Event rates
+    r_b = mu * N
+    r_i = beta * S * I / N
+    r_r = gamma * I
+    r_ds = mu * S
+    r_di = mu * I
+    r_dr = mu * R
+    r_list = [r_b, r_i, r_r, r_ds, r_di, r_dr]
+    r_t = sum(r_list)
+    
+    dt = -(1/r_t) * np.log(random.uniform(0, 1))
+    p = r_t * random.uniform(0, 1)
+    
+    p0 = 0
+    i = 0
+
+    while p0 < p:
+        p0 += r_list[i]
+        if p0 > p:
+            break
+        i += 1
+        
+            
+    S += e_list[i][0]
+    I += e_list[i][1]
+    R += e_list[i][2]
+    N = S + I + R
+    t += dt
+    
+    S_list.append(S)
+    I_list.append(I)
+    R_list.append(R)
+    N_list.append(N)
+    t_list.append(t)
+    
+# Plot the distribution
+plt.title('For β= '+str(beta)+' and γ = '+str(gamma))
+plt.plot(t_list, S_list, label='Susceptible')
+plt.plot(t_list, I_list, label='Infected')
+plt.plot(t_list, R_list, label='Recovered')
+plt.plot(t_list, N_list, label='Population')
+plt.ylim(0, max(N_list))
+plt.xlim(0, days)
+plt.ylabel('Amount of people')
+plt.xlabel('Amount of days')
+plt.legend()
+plt.show()
