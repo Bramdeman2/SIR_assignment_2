@@ -1,1 +1,128 @@
-#Problem 1
+import numpy as np
+import random
+from scipy.integrate import odeint
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+import statistics
+
+# Define starting conditions
+total_runs = 50
+time_step = 0.1 # smooth graph, minimum 0.0001
+days = 30
+N0 = 1000
+S0 = 995
+I0 = 5
+R0 = N0 - S0 - I0
+ 
+
+# Defining all events, changes in [S, I, R]
+E1 = [1, 0, 0]     #birth 
+E2 = [-1, 1, 0]    #infection
+E3 = [0, -1, 1]    #recovery
+E4 = [-1, 0, 0]    #deathS
+E5 = [0, -1, 0]    #deathI
+E6 = [0, 0 , -1]   #deathR
+
+e_list = [E1, E2, E3, E4, E5, E6]
+
+# Empty lists, format N_final[current_run] for the values of specifick run
+N_final = []
+S_final = []
+I_final = []
+R_final = []
+t_final = []
+
+for current_run in range(total_runs):
+    N = N0
+    S = S0
+    I = I0
+    R = N-S-I
+    t = 0.0
+    N_list = [N]
+    S_list = [S]
+    I_list = [I]
+    R_list = [R]
+    t_list = [t]
+    t_old = 0
+    
+    N_smooth_list = []
+    S_smooth_list = []
+    I_smooth_list = []
+    R_smooth_list = []
+    N_smooth_list = []
+    t_smooth_list = []
+    
+    mu = 0.001
+    beta = 1
+    gamma = 0.5
+
+    while t < days:
+        # Event rates
+        r_b = mu * N
+        r_i = beta * S * I / N
+        r_r = gamma * I
+        r_ds = mu * S
+        r_di = mu * I
+        r_dr = mu * R
+        r_list = [r_b, r_i, r_r, r_ds, r_di, r_dr]
+        r_t = sum(r_list)
+    
+        dt = -(1/r_t) * np.log(random.uniform(0, 1))
+        p = r_t * random.uniform(0, 1)
+        
+        t += dt
+        
+        p0 = 0
+        i = 0
+        j = 0
+        
+        if (t - t_old) % time_step == (t - t) % time_step:
+            continue 
+        else:
+            while t_old < t:
+                S_smooth_list.append(S)
+                I_smooth_list.append(I)
+                R_smooth_list.append(R)
+                N_smooth_list.append(N)
+                t_smooth_list.append(t_old)
+                t_old = round(t_old + time_step, 4)
+        
+        while p0 < p:
+            p0 += r_list[i]
+            if p0 > p:
+                break
+            i += 1
+        
+            
+        S += e_list[i][0]
+        I += e_list[i][1]
+        R += e_list[i][2]
+        N = S + I + R
+        
+        S_list.append(S)
+        I_list.append(I)
+        R_list.append(R)
+        N_list.append(N)
+        t_list.append(t)
+    
+    N_final.append(N_smooth_list)
+    S_final.append(S_smooth_list)
+    I_final.append(I_smooth_list)
+    R_final.append(R_smooth_list)
+    t_final = t_smooth_list
+    
+    plt.figure(current_run)
+    plt.title('For β= '+str(beta)+' and γ = '+str(gamma))
+    plt.plot(t_final, N_final[current_run], label='Total')
+    plt.plot(t_final, S_final[current_run], label='Susceptible')
+    plt.plot(t_final, I_final[current_run], label='Infected')
+    plt.plot(t_final, R_final[current_run], label='Resistant')
+    plt.ylim(0, max(N_list))
+    plt.xlim(0, days)
+    plt.ylabel('Amount of people')
+    plt.xlabel('Amount of days')
+    plt.show()
+    plt.legend
+
+    
+    current_run += 1
